@@ -1,0 +1,70 @@
+#Dragon Oath AXP extractor 
+#quickbms script 
+#by Tsukihime 
+
+get idstring long 
+get unk1 long 
+get null long 
+get unk2 long 
+get offsetBlock long #this block gives the offsets and data sizes 
+get files long #includes the (list) block which holds all filenames and their data size 
+get unk3 long 
+get startOffset long #not important, but the data for first file starts here. 
+get unk4 long 
+goto offsetBlock 
+savepos offsetPtr 
+
+get folder basename 
+
+#get the (list) offset 
+math temp = files 
+math temp -= 1 
+math temp *= 12 
+math temp += offsetBlock 
+
+goto temp 
+get listOfs long 
+
+#go to the first filename 
+goto listOfs 
+goto 9 0 SEEK_CUR 
+savepos listPtr 
+findloc newline string "\n" 
+math newline += 1 
+goto newline 
+savepos listPtr 
+#list pointer is now set 
+
+for i = 0 < files 
+
+   #======Get offset and size====== 
+    
+   goto offsetBlock 
+   get offset long 
+   get size long 
+   get unk long #always 0x0000008 
+   savepos offsetBlock #remember where we are 
+
+   #======Get Filename============= 
+   #find the pipe character 0x7C 
+   goto listPtr 
+   findloc pipeOfs string "|" 
+
+   #calculate string length 
+   math stringlen = pipeOfs 
+   math stringlen -= listPtr 
+
+   #get the string name 
+   getdstring name stringlen 
+
+   #update position of list pointer 
+   math listPtr = pipeOfs 
+   math listPtr += 19 
+   goto listPtr 
+    
+   #========save file=============== 
+   set outName = folder 
+   string outName += "/" 
+   string outName += name 
+  log outName offset size 
+next i  
